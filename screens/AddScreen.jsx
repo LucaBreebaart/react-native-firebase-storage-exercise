@@ -1,52 +1,84 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { StyleSheet, Text, TouchableOpacity, View, TextInput, Button, Image } from 'react-native';
+import React, { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { handleUploadOfImage } from '../services/BucketService';
 
 const AddScreen = () => {
+    const [title, setTitle] = useState('');
+    const [image, setImage] = useState(null);
 
-    const [title, setTitle] = useState('')
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
 
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
 
-  return (
-   
-    <View style={styles.container}>
+    const uploadImage = async () => {
+        if (image && title) {
+            try {
+                await handleUploadOfImage(image, title);
+                alert("Image uploaded successfully");
+            } catch (error) {
+                console.error("Error uploading image: ", error);
+                alert("Failed to upload image");
+            }
+        } else {
+            alert("Please provide both a title and an image.");
+        }
+    };
 
-        <TextInput
-            style={styles.inputField}
-            placeholder="Memory Title"
-            onChangeText={newText => setTitle(newText)}
-            defaultValue={title}
-        />
+    return (
+        <View style={styles.container}>
+            <TextInput
+                style={styles.inputField}
+                placeholder="Memory Title"
+                onChangeText={newText => setTitle(newText)}
+                value={title}
+            />
+            <Button title="Pick an image from camera roll" onPress={pickImage} />
+            {image && <Image source={{ uri: image }} style={styles.image} />}
+            <TouchableOpacity style={styles.button} onPress={uploadImage}>
+                <Text style={styles.buttonText}>Add Memory</Text>
+            </TouchableOpacity>
+        </View>
+    );
+};
 
-        {/* TODO: Upload Image */}
-
-        <TouchableOpacity style={styles.button} >
-            <Text style={styles.buttonText}>Add Memory</Text>
-        </TouchableOpacity>
-        
-    </View>
-  )
-}
-
-export default AddScreen
+export default AddScreen;
 
 const styles = StyleSheet.create({
     container: {
-        padding: 20
+        padding: 20,
+        flex: 1,
+        backgroundColor: '#fff',
     },
     inputField: {
-        borderWidth: 2,
-        borderColor: 'black',
-        marginTop: 15,
-        padding: 10
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 20,
     },
     button: {
         backgroundColor: "green",
-        textAlign: 'center',
         padding: 15,
-        marginTop: 30
+        borderRadius: 5,
+        alignItems: 'center',
     },
     buttonText: {
-        textAlign: 'center',
-        color: 'white'
+        color: 'white',
+        fontWeight: 'bold',
     },
-})
+    image: {
+        width: 200,
+        height: 200,
+        marginBottom: 20,
+    },
+});
